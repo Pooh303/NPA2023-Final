@@ -3,7 +3,7 @@ import xmltodict
 
 m = manager.connect(
     # host="<!!!REPLACEME with router IP sddress!!!>",
-    host="192.168.150.140",
+    host="192.168.20.158",
     # port=<!!!REPLACEME with NETCONF Port number!!!>,
     port=830,
     username="admin",

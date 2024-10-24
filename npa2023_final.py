@@ -15,7 +15,7 @@ import netconf_gpt as netconf
 #######################################################################################
 # 2. Assign the Webex hard-coded access token to the variable accessToken.
 
-accessToken = "Bearer NTMxMDNiZGYtYTM3YS00ODVlLWFlYTMtZmNiZTNlNDJmNmZlYWM0NzE0Y2UtZjlj_P0A1_935f4b77-0a1c-4d96-bc39-d07643ef6a87"
+accessToken = "Bearer NGQ4MWZiMGUtYTUyMi00ZGFjLWJiYWMtM2Y4MTE0NDUyODY2Y2Y1NTEzYzctYTlh_P0A1_935f4b77-0a1c-4d96-bc39-d07643ef6a87"
 
 #######################################################################################
 # 3. Prepare parameters get the latest message for messages API.
@@ -76,26 +76,30 @@ while True:
 
     # check if the text of the message starts with the magic character "/" followed by your studentID and a space and followed by a command name
     #  e.g.  "/66070123 create"
-    if message.find("/65070182 create") == 0:
+    if message.find("/65070182") == 0:
 
         # extract the command
-        command = message.split(' ', 1)[1]
-        print(command)
+        name = message.split()[0][1:]
+        if message == f"/{name}":
+            responseMessage = "Error: No command or unknown command"
+        else:
+            command = message.split(' ', 1)[1]
+        # print(name, command)
 
 # 5. Complete the logic for each command
-
-        if command == "create":
-            responseMessage = netconf.create()
-        elif command == "delete":
-            responseMessage = netconf.delete()
-        elif command == "enable":
-            responseMessage = netconf.enable()
-        elif command == "disable":
-            responseMessage = netconf.disable()
-        elif command == "status":
-            responseMessage = netconf.status()
-        else:
-            responseMessage = "Error: No command or unknown command"
+            if command == "create":
+                # print(name)
+                responseMessage = netconf.create(name)
+            elif command == "delete":
+                responseMessage = netconf.delete(name)
+            elif command == "enable":
+                responseMessage = netconf.enable(name)
+            elif command == "disable":
+                responseMessage = netconf.disable(name)
+            elif command == "status":
+                responseMessage = netconf.status(name)
+            else:
+                responseMessage = "Error: No command or unknown command"
         
 # 6. Complete the code to post the message to the Webex Teams room.
         
@@ -121,5 +125,6 @@ while True:
             raise Exception(
                 "Incorrect reply from Webex Teams API. Status code: {}".format(r.status_code)
             )
+        
 
 

@@ -1,115 +1,131 @@
 from ncclient import manager
 import xmltodict
+import xml.dom.minidom
 
 # Connect to the router using NETCONF
 m = manager.connect(
-    host="192.168.150.140",  # Replace with your router's IP address
+    host="192.168.20.158",  # Replace with your router's IP address
     port=830,                # Replace with your NETCONF port number (default is 830)
     username="admin",        # Replace with your router's username
     password="cisco",        # Replace with your router's password
     hostkey_verify=False     # Disable host key verification for testing (use cautiously)
 )
 
-def create():
+def create(name):
     # Replace with the actual YANG configuration data to create a resource (e.g., loopback interface)
-    netconf_config = """
-    <config>
-        <interfaces xmlns="urn:ietf:params:xml:ns:yang:ietf-interfaces">
-            <interface>
-                <name>Loopback100</name>
-                <description>Test Loopback</description>
-                <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:softwareLoopback</type>
-                <enabled>true</enabled>
-            </interface>
-        </interfaces>
-    </config>
-    """
-
+    netconf_loopback = f"""
+        <config>
+        <native xmlns="http://cisco.com/ns/yang/Cisco-IOS-XE-native">
+        <interface>
+        <Loopback>
+            <name>{name}</name>
+            <description>Loopback{name}</description>
+            <ip>
+            <address>
+            <primary>
+            <address>172.30.182.1</address>
+            <mask>255.255.255.0</mask>
+            </primary>
+            </address>
+            </ip>
+        </Loopback>
+        </interface>
+        </native>
+        </config>
+        """
+    
+    # netconf_reply = m.edit_config(target="running", config=netconf_loopback)
+    # print(xml.dom.minidom.parseString(netconf_reply.xml).toprettyxml())
+    if status(name) == f"Interface Loopback {name} is enabled" or status(name) == f"Interface Loopback {name} is disabled":
+        return f"Cannot create: Interface loopback {name}"
     try:
-        netconf_reply = netconf_edit_config(netconf_config)
+        netconf_reply = netconf_edit_config(netconf_loopback)
         xml_data = netconf_reply.xml
-        print(xml_data)
+        # print(xml_data)
         if '<ok/>' in xml_data:
-            return "Interface created successfully."
-    except:
-        print("Error during create operation!")
+            return f"Interface loopback {name} is created successfully"
+    except Exception as e:
+        return f"An error occurred: {e}"
+    
 
-def delete():
+def delete(name):
     # Replace with YANG data to delete the resource (e.g., loopback interface)
-    netconf_config = """
+    netconf_config = f"""
     <config>
         <interfaces xmlns="urn:ietf:params:xml:ns:yang:ietf-interfaces">
             <interface operation="delete">
-                <name>Loopback100</name>
+                <name>Loopback{name}</name>
             </interface>
         </interfaces>
     </config>
     """
 
+    if status(name) != f"Interface Loopback {name} is enabled" and status(name) != f"Interface Loopback {name} is disabled":
+        return f"Cannot delete: Interface loopback {name}"
     try:
         netconf_reply = netconf_edit_config(netconf_config)
         xml_data = netconf_reply.xml
-        print(xml_data)
+        # print(xml_data)
         if '<ok/>' in xml_data:
-            return "Interface deleted successfully."
-    except:
-        print("Error during delete operation!")
+            return f"Interface loopback {name} is deleted successfully"
+    except Exception as e:
+        return f"An error occurred: {e}"
 
-def enable():
+def enable(name):
     # Replace with YANG data to enable an interface
-    netconf_config = """
+    netconf_config = f"""
     <config>
         <interfaces xmlns="urn:ietf:params:xml:ns:yang:ietf-interfaces">
             <interface>
-                <name>GigabitEthernet2</name>
+                <name>Loopback{name}</name>
                 <enabled>true</enabled>
             </interface>
         </interfaces>
     </config>
     """
 
+    if status(name) != f"Interface Loopback {name} is enabled" and status(name) != f"Interface Loopback {name} is disabled":
+        return f"Cannot delete: Interface loopback {name}"
     try:
         netconf_reply = netconf_edit_config(netconf_config)
         xml_data = netconf_reply.xml
-        print(xml_data)
+        # print(xml_data)
         if '<ok/>' in xml_data:
-            return "Interface enabled successfully."
-    except:
-        print("Error during enable operation!")
+            return f"Interface loopback {name} is enabled successfully"
+    except Exception as e:
+        return f"An error occurred: {e}"
 
-def disable():
+def disable(name):
     # Replace with YANG data to disable an interface
-    netconf_config = """
+    netconf_config = f"""
     <config>
         <interfaces xmlns="urn:ietf:params:xml:ns:yang:ietf-interfaces">
             <interface>
-                <name>GigabitEthernet2</name>
+                <name>Loopback{name}</name>
                 <enabled>false</enabled>
             </interface>
         </interfaces>
     </config>
     """
 
+    if status(name) != f"Interface Loopback {name} is enabled" and status(name) != f"Interface Loopback {name} is disabled":
+        return f"Cannot delete: Interface loopback {name}"
     try:
         netconf_reply = netconf_edit_config(netconf_config)
         xml_data = netconf_reply.xml
-        print(xml_data)
+        # print(xml_data)
         if '<ok/>' in xml_data:
-            return "Interface disabled successfully."
-    except:
-        print("Error during disable operation!")
+            return f"Interface loopback {name} is shutdowned successfully"
+    except Exception as e:
+        return f"An error occurred: {e}"
 
-def netconf_edit_config(netconf_config):
-    # Replace with the correct NETCONF edit-config operation targeting the 'running' datastore
-    return m.edit_config(target="running", config=netconf_config)
-
-def status():
+def status(name):
     # Define a NETCONF filter to retrieve operational state of the interface
-    netconf_filter = """
+    netconf_filter = f"""
     <filter>
         <interfaces-state xmlns="urn:ietf:params:xml:ns:yang:ietf-interfaces">
             <interface>
-                <name>GigabitEthernet2</name>
+                <name>Loopback{name}</name>
             </interface>
         </interfaces-state>
     </filter>
@@ -118,20 +134,35 @@ def status():
     try:
         # Use the 'get' operation to fetch the status of the interface
         netconf_reply = m.get(filter=netconf_filter)
-        print(netconf_reply)
         netconf_reply_dict = xmltodict.parse(netconf_reply.xml)
+        data = netconf_reply_dict.get('rpc-reply', {}).get('data', {})
+        interfaces_state = ""
 
         # Check if the interface status is present
-        if 'interfaces-state' in netconf_reply_dict:
-            interface = netconf_reply_dict['interfaces-state']['interface']
-            admin_status = interface['admin-status']
-            oper_status = interface['oper-status']
+        if data :
+            interfaces_state = data.get('interfaces-state')
+
+        # print(interfaces_state)
+            
+        if 'interface' in interfaces_state:
+            interface = interfaces_state['interface']
+            admin_status = interface.get('admin-status')
+            oper_status = interface.get('oper-status')
+            
+            # print(admin_status, oper_status)
 
             if admin_status == 'up' and oper_status == 'up':
-                return "Interface is up and operational."
+                return f"Interface Loopback {name} is enabled"
             elif admin_status == 'down' and oper_status == 'down':
-                return "Interface is down."
+                return f"Interface Loopback {name} is disabled"
+            else:
+                return f"Interface Loopback {name} has inconsistent states."
         else:
-            return "No operational state data for the interface."
-    except:
-        print("Error during status retrieval!")
+            return f"No Interface Loopback {name}"
+
+    except Exception as e:     
+        return f"An error occurred: {e}"
+
+def netconf_edit_config(netconf_config):
+    # Replace with the correct NETCONF edit-config operation targeting the 'running' datastore
+    return m.edit_config(target="running", config=netconf_config)
